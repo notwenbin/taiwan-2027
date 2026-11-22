@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Taiwan 2027</title>
+<meta name="apple-mobile-web-app-title" content="Taiwan 2027">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#c8102e">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+/* Launcher for the shared trip planner. It holds the home-screen icon and opens the planner.
+   The planner's address is NOT in this file: it travels in the part of the link after "#",
+   which is never sent to or stored on GitHub. */
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:#c8102e;color:#fff;
+ font:17px/1.5 -apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC",system-ui,sans-serif;text-align:center;
+ padding:env(safe-area-inset-top) 24px env(safe-area-inset-bottom)}
+main{max-width:360px}
+img{width:96px;height:96px;border-radius:22px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+h1{font:800 30px/1.15 Georgia,"Noto Serif TC",serif;margin:18px 0 6px}
+p{margin:8px 0;opacity:.92}
+.steps{text-align:left;background:rgba(0,0,0,.18);border-radius:16px;padding:14px 18px;margin:18px 0}
+.steps ol{margin:0;padding-left:20px}.steps li{margin:6px 0}
+a.btn{display:inline-block;margin-top:6px;background:#fff;color:#c8102e;font-weight:700;text-decoration:none;border-radius:99px;padding:12px 24px;min-height:44px}
+.small{font-size:13px;opacity:.8}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+ <img src="apple-touch-icon.png" alt="">
+ <h1>Taiwan 2027</h1>
+ <p class="small">WenBin &amp; Kelly · 台灣之旅</p>
+
+ <div id="go" hidden><p>Opening your trip… 開啟中…</p></div>
+
+ <div id="add" hidden>
+  <div class="steps">
+   <b>Add to your Home Screen · 加到主畫面</b>
+   <ol>
+    <li>Tap <b>Share</b> (the square with an arrow) · 點「分享」</li>
+    <li>Tap <b>Add to Home Screen</b> · 點「加入主畫面」</li>
+    <li>Tap <b>Add</b> · 點「新增」</li>
+   </ol>
+  </div>
+  <a class="btn" id="open" href="#">Open the planner · 開啟行程</a>
+ </div>
+
+ <div id="nolink" hidden>
+  <p>This link is missing the trip code. Ask WenBin for the full link.</p>
+  <p>這個連結缺少行程代碼，請跟 WenBin 要完整連結。</p>
+ </div>
+</main>
+<script>
+{
+ const show=id=>document.getElementById(id).hidden=false;
+ let code=location.hash.slice(1);
+ try{ if(/^AKfy[\w-]{20,200}$/.test(code)) localStorage.setItem('trip-code',code); else code=localStorage.getItem('trip-code')||''; }catch(e){}
+ if(!/^AKfy[\w-]{20,200}$/.test(code)){ show('nolink'); }
+ else{
+  const url='https://script.google.com/macros/s/'+code+'/exec';
+  const fromHome=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+  if(fromHome){ show('go'); location.replace(url); }       // opened from the home-screen icon: go straight to the planner
+  else{ show('add'); document.getElementById('open').href=url; }   // opened in the browser: show how to add it
+ }
+}
+</script>
+</body>
+</html>
