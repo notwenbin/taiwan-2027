@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Taiwan 2027</title>
 <meta name="apple-mobile-web-app-title" content="Taiwan 2027">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#c8102e">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -58,15 +55,19 @@ a.btn{display:inline-block;margin-top:6px;background:#fff;color:#c8102e;font-wei
 </main>
 <script>
 {
- const show=id=>document.getElementById(id).hidden=false;
- let code=location.hash.slice(1);
- try{ if(/^AKfy[\w-]{20,200}$/.test(code)) localStorage.setItem('trip-code',code); else code=localStorage.getItem('trip-code')||''; }catch(e){}
- if(!/^AKfy[\w-]{20,200}$/.test(code)){ show('nolink'); }
+ // Setup link:   …/#setup-CODE  → shows "Add to Home Screen" steps, then quietly drops "setup-"
+ //               from the address so the saved shortcut is …/#CODE.
+ // Shortcut:     …/#CODE        → opens the planner straight away, as a normal Safari page.
+ const ok=c=>/^AKfy[\w-]{20,200}$/.test(c), show=id=>document.getElementById(id).hidden=false;
+ let h=location.hash.slice(1),setup=false;
+ if(h.startsWith('setup-')){setup=true;h=h.slice(6)}
+ if(!ok(h)){try{h=localStorage.getItem('trip-code')||''}catch(e){}}
+ if(!ok(h)){show('nolink')}
  else{
-  const url='https://script.google.com/macros/s/'+code+'/exec';
-  const fromHome=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
-  if(fromHome){ show('go'); location.replace(url); }       // opened from the home-screen icon: go straight to the planner
-  else{ show('add'); document.getElementById('open').href=url; }   // opened in the browser: show how to add it
+  try{localStorage.setItem('trip-code',h)}catch(e){}
+  const url='https://script.google.com/macros/s/'+h+'/exec';
+  if(setup){show('add');document.getElementById('open').href=url;history.replaceState(null,'','#'+h)}
+  else{show('go');location.replace(url)}
  }
 }
 </script>
