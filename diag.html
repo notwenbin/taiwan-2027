@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Safari connection test</title>
+<style>body{font:20px/1.5 -apple-system,system-ui,sans-serif;padding:24px;background:#fff;color:#000}li{margin:8px 0}b{font-family:ui-monospace,monospace}</style>
+</head><body><h2>Connection test</h2><ol id="o"></ol>
+<script>
+const U='https://script.google.com/macros/s/'+location.hash.slice(1)+'/exec';
+const out=(name,res)=>{try{new Image().src='http://localhost:8770/report?'+encodeURIComponent(name+' => '+res)}catch(e){};const li=document.createElement('li');li.innerHTML=name+': <b>'+String(res).replace(/[<>&]/g,'')+'</b>';document.getElementById('o').appendChild(li)};
+const body=JSON.stringify({fn:'getAll',args:[]});
+const tests=[
+ ['GH page',()=>fetch(U,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:'page',args:[]})})],
+ ['GH getAll',()=>fetch(U,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body})],
+ ['GH getAll omit',()=>fetch(U,{method:'POST',credentials:'omit',body})],
+ ['GH other site (github api)',()=>fetch('https://api.github.com/zen')],
+];
+(async()=>{
+ out('Browser',navigator.userAgent.replace(/^.*\) /,''));
+ for(const [n,f] of tests){
+  const t0=Date.now();
+  try{const r=await f();const tx=await r.text();out(n,'OK '+r.status+' '+(Date.now()-t0)+'ms len '+tx.length+' '+tx.slice(0,20))}
+  catch(e){out(n,'FAIL '+(e&&e.message)+' '+(Date.now()-t0)+'ms')}
+ }
+ out('done','✓');
+})();
+</script></body></html>
