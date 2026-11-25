@@ -35,26 +35,55 @@ img{width:84px;height:84px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,
   try { localStorage.setItem('trip-code', h); } catch (e) {}
   if (location.hash !== '#' + h) history.replaceState(null, '', '#' + h);
 
+  var url = 'https://script.google.com/macros/s/' + h + '/exec';
   var done = false;
-  var show = function (html) { if (done) return; done = true; document.open(); document.write(html); document.close(); };
-  var cached = function () { try { return localStorage.getItem('trip-page'); } catch (e) { return null; } };
-  var fallback = function () {
-    var c = cached();
-    if (c) show(c);
-    else msg.innerHTML = 'Could not reach the planner. Check your connection and try again.<br>無法連線，請檢查網路後再試一次。';
+  var show = function (html) {
+    if (done) return; done = true;
+    document.open(); document.write(html); document.close();
   };
-  // Always fetch the newest page; use the last copy only if Google can't be reached in time.
-  var timer = setTimeout(fallback, 8000);
-  fetch('https://script.google.com/macros/s/' + h + '/exec', {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ fn: 'page', args: [] })
-  }).then(function (r) { return r.json(); }).then(function (j) {
-    if (!j || !j.ok || typeof j.result !== 'string') throw new Error('bad');
-    try { localStorage.setItem('trip-page', j.result); } catch (e) {}
-    clearTimeout(timer);
-    show(j.result);
-  }).catch(function () { clearTimeout(timer); fallback(); });
+  var cached = function () { try { return localStorage.getItem('trip-page'); } catch (e) { return null; } };
+
+  // One try: resolves with the page, or rejects with a short reason we can show on screen.
+  var once = function () {
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error('timed out')); }, 15000);
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ fn: 'page', args: [] })
+      }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      }).then(function (txt) {
+        var j;
+        try { j = JSON.parse(txt); } catch (e) { throw new Error('not JSON: ' + txt.replace(/\s+/g, ' ').slice(0, 60)); }
+        if (!j.ok) throw new Error('script: ' + (j.error || 'failed'));
+        if (typeof j.result !== 'string') throw new Error('empty page');
+        clearTimeout(t); res(j.result);
+      }).catch(function (e) { clearTimeout(t); rej(e); });
+    });
+  };
+
+  var fail = function (why) {
+    var c = cached();
+    if (c) { show(c); return; }
+    msg.innerHTML = 'Could not reach the planner. 無法連線。' +
+      '<br><button id="again" style="margin-top:14px;background:#fff;color:#c8102e;border:0;border-radius:99px;font:700 16px -apple-system,system-ui,sans-serif;padding:12px 24px;min-height:44px">Try again · 再試一次</button>' +
+      '<div style="margin-top:14px;font-size:12px;opacity:.75">' + String(why).replace(/[<>&]/g, '') + '</div>';
+    document.getElementById('again').onclick = function () { location.reload(); };
+  };
+
+  // Up to 3 tries (Google is sometimes slow or fails on the first request after a quiet spell).
+  var attempt = function (n) {
+    once().then(show, function (e) {
+      var why = (e && e.message) || String(e);
+      if (n < 3) {
+        msg.innerHTML = 'Still loading… 載入中… (' + (n + 1) + '/3)';
+        setTimeout(function () { attempt(n + 1); }, 1500 * n);
+      } else fail(why);
+    });
+  };
+  attempt(1);
 })();
 </script>
 </body>
