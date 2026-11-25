@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Planner load test</title></head>
+<body style="margin:0"><iframe id="f" style="width:430px;height:900px;border:0"></iframe>
+<script>
+const rep=s=>{new Image().src='http://localhost:8770/report?'+encodeURIComponent('REAL '+s)};
+const f=document.getElementById('f');
+f.src='./?t='+Date.now()+location.hash;
+let n=0;const iv=setInterval(()=>{n++;let s='';
+ try{const d=f.contentDocument;const st=d.querySelector('.status');const m=d.getElementById('msg');
+  s=(st?'status='+st.textContent:'')+(m?' msg='+m.innerText.replace(/\s+/g,' '):'')}catch(e){s='cannot read: '+e.message}
+ rep(n*2+'s '+s);if(n>=12)clearInterval(iv)},2000);
+</script></body></html>
